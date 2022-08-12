@@ -1,5 +1,7 @@
 # Overview
 
+![](./public/Screen%20Shot%202022-08-12%20at%2012.39.28%20PM.png)
+
 To run this project you need to install Astro CLI and must have Docker installed:
 
 ### via Homebrew

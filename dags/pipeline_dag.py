@@ -1,15 +1,24 @@
-from tracemalloc import start
+from json import load
 import boto3
 import requests
-import sqlalchemy
 import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from airflow.decorators import task, dag
 
 
+AWS_S3_BUCKET = '1sti-data-engineer-challenge'
+AWS_ACCESS_KEY_ID = 'aws_access_key_id'
+AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
+
+
 @dag(schedule_interval='@daily', start_date=datetime(2022, 8, 8), catchup=False)
 def pipeline_dag():
+
+    s3 = boto3.resource('s3',
+                        aws_access_key_id='AWS_ACCESS_KEY_ID',
+                        aws_secret_access_key='AWS_SECRET_ACCESS_KEY'
+                        )
 
     @task
     def get_data_escolas_publicas():
@@ -144,15 +153,24 @@ def pipeline_dag():
         df.to_csv('data_escolas_privadas.csv', index=False)
 
     @task
-    def join_dataframes():
+    def join_dataframes_in_datalake():
         df_publicas = pd.read_csv('data_escolas_publicas.csv')
         df_privadas = pd.read_csv('data_escolas_privadas.csv')
         df = pd.concat([df_publicas, df_privadas])
-        df.to_parquet('data_medalhas.parquet', index=False)
+        key = 'data_medalhas.parquet'
+        df.to_parquet(
+            f"s3://{AWS_S3_BUCKET}/{key}",
+            index=False,
+            storage_options={
+                "key": AWS_ACCESS_KEY_ID,
+                "secret": AWS_SECRET_ACCESS_KEY,
+            },
+        )
         print(df.describe())
-        print('Joining dataframes')
+        print('Joining dataframes and upload to datalake')
 
-    [get_data_escolas_publicas(), get_data_escolas_privadas()] >> join_dataframes()
+    [get_data_escolas_publicas(), get_data_escolas_privadas()] >> \
+        join_dataframes_in_datalake()
 
 
 dag = pipeline_dag()

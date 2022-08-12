@@ -52,6 +52,8 @@ This command will spin up 3 Docker containers on your machine, each for a differ
 
 - Verify that all 3 Docker containers were created by running 'docker ps'.
 
+---
+
 - Airflow Webserver: http://localhost:8080
 - Postgres Database: localhost:5432/postgres
 - The default Airflow UI credentials are: admin:admin

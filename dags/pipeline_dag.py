@@ -1,4 +1,3 @@
-from json import load
 import boto3
 import requests
 import pandas as pd
@@ -14,11 +13,6 @@ AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
 
 @dag(schedule_interval='@daily', start_date=datetime(2022, 8, 8), catchup=False)
 def pipeline_dag():
-
-    s3 = boto3.resource('s3',
-                        aws_access_key_id='AWS_ACCESS_KEY_ID',
-                        aws_secret_access_key='AWS_SECRET_ACCESS_KEY'
-                        )
 
     @task
     def get_data_escolas_publicas():
@@ -157,10 +151,11 @@ def pipeline_dag():
         df_publicas = pd.read_csv('data_escolas_publicas.csv')
         df_privadas = pd.read_csv('data_escolas_privadas.csv')
         df = pd.concat([df_publicas, df_privadas])
-        key = 'data_medalhas.parquet'
+        key = 'data_medalhas.snappy.parquet'
         df.to_parquet(
             f"s3://{AWS_S3_BUCKET}/{key}",
             index=False,
+            compression='snappy',
             storage_options={
                 "key": AWS_ACCESS_KEY_ID,
                 "secret": AWS_SECRET_ACCESS_KEY,
